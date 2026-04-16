@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: slots
+    // Fields: date (string), time (string), status (string), frozenAt (timestamp), userId (string)
+    //
+    // Collection: bookings
+    // Fields: slotId (string), userId (string), source (string), status (string), amount (number)
+    //
+    // Collection: transcripts
+    // Fields: bookingId (string), transcript (list), entities (map), sentimentTimeline (list), coachingCard (map)
+    //
+    // Collection: loyalty
+    // Fields: userId (string), points (number), tier (string), totalSpent (number)
+    //
+    // Collection: users
+    // Fields: email (string), role (string), name (string)
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email in ["shoaibkohri1006@gmail.com", "falkon.kohri404@gmail.com"] && request.auth.token.email_verified == true);
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /slots/{slotId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /bookings/{bookingId} {
+      // PII Check: Only owner or admin can read bookings
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow write: if isAuthenticated();
+    }
+
+    match /transcripts/{transcriptId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /loyalty/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId} {
+      // PII Check: Only owner can read their own user document
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+  }
+}

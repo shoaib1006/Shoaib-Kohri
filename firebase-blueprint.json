@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "Slot": {
+      "title": "Slot",
+      "description": "A time slot for box cricket booking",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date", "description": "ISO date string" },
+        "time": { "type": "string", "description": "Time slot (e.g., 18:00-19:00)" },
+        "status": { "type": "string", "enum": ["available", "frozen", "confirmed"], "description": "Current status of the slot" },
+        "frozenAt": { "type": "string", "format": "date-time", "description": "Timestamp when the slot was frozen" },
+        "userId": { "type": "string", "description": "ID of the user who booked/froze the slot" },
+        "paymentId": { "type": "string", "description": "Reference to the payment transaction" }
+      },
+      "required": ["date", "time", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A booking record",
+      "type": "object",
+      "properties": {
+        "slotId": { "type": "string" },
+        "userId": { "type": "string" },
+        "source": { "type": "string", "enum": ["whatsapp", "voice"] },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "amount": { "type": "number" }
+      },
+      "required": ["slotId", "userId", "source", "status"]
+    },
+    "CallTranscript": {
+      "title": "Call Transcript",
+      "description": "Transcript and analysis of a booking call",
+      "type": "object",
+      "properties": {
+        "bookingId": { "type": "string" },
+        "transcript": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": { "type": "string" },
+              "text": { "type": "string" },
+              "timestamp": { "type": "number" }
+            }
+          }
+        },
+        "entities": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string" },
+            "time": { "type": "string" },
+            "playerCount": { "type": "number" }
+          }
+        },
+        "sentimentTimeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": "number" },
+              "sentiment": { "type": "number" },
+              "engagement": { "type": "number" }
+            }
+          }
+        },
+        "coachingCard": {
+          "type": "object",
+          "properties": {
+            "strengths": { "type": "array", "items": { "type": "string" } },
+            "missedOpportunities": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "managerFeedback": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "rating": { "type": "number" },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "managerId": { "type": "string" }
+          }
+        }
+      }
+    },
+    "UserLoyalty": {
+      "title": "User Loyalty",
+      "description": "Loyalty points and tier information for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "points": { "type": "number" },
+        "tier": { "type": "string", "enum": ["Bronze", "Silver", "Gold"] },
+        "totalSpent": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "points", "tier"]
+    }
+  },
+  "firestore": {
+    "/slots/{slotId}": { "schema": "Slot", "description": "Available and booked slots" },
+    "/bookings/{bookingId}": { "schema": "Booking", "description": "Booking records" },
+    "/transcripts/{transcriptId}": { "schema": "CallTranscript", "description": "Call analysis data" },
+    "/loyalty/{userId}": { "schema": "UserLoyalty", "description": "User loyalty data" }
+  }
+}
